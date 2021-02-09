@@ -7,76 +7,6 @@ import time
 # - redding very early is broken
 # - ATs *right* after each other might not get registered
 
-class ActionTest:
-    barPositions = []
-    greenPosition = None
-    whitePositions = [None, None] # start, end
-    stillFrames = None
-    result = None
-    capturesPerSecond = None
-
-    def setGreenPos(self, x):
-        self.greenPosition = x
-
-    def setWhitePos(self, Xs):
-        self.whitePositions = Xs
-
-    def setBarPositions(self, positions):
-        self.barPositions = positions
-
-    def setStillFrames(self, frames):
-        self.stillFrames = frames
-
-    def setResult(self, result):
-        self.result = result
-
-    def setCapturesPerSecond(self, cps):
-        self.capturesPerSecond = cps
-
-    def print(self):
-        resultName = ATResult.names[self.result]
-        if self.result == ATResult.GREEN:
-            timing = "ok"
-        elif self.barPositions and self.greenPosition:
-            lastPos = self.barPositions[-1]
-            if lastPos > self.greenPosition:
-                timing = "late"
-            else:
-                timing = "early"
-        else:
-            timing = "?"
-        print("{} ({}): {} {}-{} ...{}".format(resultName, timing, self.greenPosition,
-            *self.whitePositions, self.barPositions[-4:]))
-
-    def getLogLine(self, logShort=False):
-        # result greenPos whitePos hitPos/barPositions stillFrames capturesPerSecond
-        info = []
-        info.append(ATResult.getResultName(self.result))
-        info.append(str(self.greenPosition))
-        info.append("-".join(map(str,self.whitePositions)))
-        if logShort:
-            if self.barPositions:
-                info.append(str(self.barPositions[-1]))
-            else:
-                info.append("?")
-        else:
-            info.append(str(self.barPositions))
-        info.append(str(self.stillFrames))
-        info.append(str(self.capturesPerSecond))
-        return " ".join(info)
-
-
-class ATResult:
-    WHITE = 0
-    GREEN = 1
-    RED = 2
-    names = ["white","green","red"]
-
-    @classmethod
-    def getResultName(thisClass, index):
-        return thisClass.names[index]
-
-
 class ATReader:
     @staticmethod
     def constructBbox(xLeft, xRight, yTop):
@@ -269,5 +199,74 @@ class ATReader:
         return max(rgb) < 50
 
     def isQuiteDark(self, rgb):
-        #return max(rgb) < 80
         return sum(rgb) < 270
+
+
+class ActionTest:
+    barPositions = []
+    greenPosition = None
+    whitePositions = [None, None] # start, end
+    stillFrames = None
+    result = None
+    capturesPerSecond = None
+
+    def setGreenPos(self, x):
+        self.greenPosition = x
+
+    def setWhitePos(self, Xs):
+        self.whitePositions = Xs
+
+    def setBarPositions(self, positions):
+        self.barPositions = positions
+
+    def setStillFrames(self, frames):
+        self.stillFrames = frames
+
+    def setResult(self, result):
+        self.result = result
+
+    def setCapturesPerSecond(self, cps):
+        self.capturesPerSecond = cps
+
+    def print(self):
+        resultName = ATResult.names[self.result]
+        if self.result == ATResult.GREEN:
+            timing = "ok"
+        elif self.barPositions and self.greenPosition:
+            lastPos = self.barPositions[-1]
+            if lastPos > self.greenPosition:
+                timing = "late"
+            else:
+                timing = "early"
+        else:
+            timing = "?"
+        print("{} ({}): {} {}-{} ...{}".format(resultName, timing, self.greenPosition,
+            *self.whitePositions, self.barPositions[-4:]))
+
+    def getLogLine(self, logShort=False):
+        # result greenPos whitePos hitPos/barPositions stillFrames capturesPerSecond
+        info = []
+        info.append(ATResult.getResultName(self.result))
+        info.append(str(self.greenPosition))
+        info.append("-".join(map(str,self.whitePositions)))
+        if logShort:
+            if self.barPositions:
+                info.append(str(self.barPositions[-1]))
+            else:
+                info.append("?")
+        else:
+            info.append(str(self.barPositions))
+        info.append(str(self.stillFrames))
+        info.append(str(self.capturesPerSecond))
+        return " ".join(info)
+
+
+class ATResult:
+    WHITE = 0
+    GREEN = 1
+    RED = 2
+    names = ["white","green","red"]
+
+    @classmethod
+    def getResultName(thisClass, index):
+        return thisClass.names[index]
