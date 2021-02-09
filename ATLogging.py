@@ -13,14 +13,18 @@ class ATLogger:
         self.file = open(self.filepath, "a")
 
     def log(self, actionTest):
-        self.file.write(actionTest.getLogLine(self.logShort) + "\n")
+        self.writeToFile(actionTest.getLogLine(self.logShort) + "\n")
 
     def logNewSession(self, usedBbox):
         date = time.strftime("%d. %m. %Y %H:%M")
         pixelWidth = usedBbox[2] - usedBbox[0]
         line = "---New Session (v{}) ({}) ({} pixels wide)\n"
         line = line.format(self.VERSION, date, pixelWidth)
+        self.writeToFile(line)
+
+    def writeToFile(self, text):
         self.file.write(line)
+        self.file.flush()
 
     def doesFileExist(self):
         return os.path.isfile(self.filepath)
