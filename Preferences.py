@@ -1,7 +1,7 @@
 import os
 from ATLogging import ATLogger
 
-class Preferences:
+class PreferencesManager:
     DATA_FOLDER_NAME = ATLogger.DATA_FOLDER_NAME
     FILENAME = "prefs.txt"
     DEFAULTS = [("batch size",100),
