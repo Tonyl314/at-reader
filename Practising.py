@@ -1,7 +1,7 @@
 import os
 from ATReading import *
-from ATLogging import *
-from ATPreferences import *
+from ATLogging import ATLogger
+from Preferences import PreferencesManager
 
 class Practise:
     def __init__(self):
@@ -14,7 +14,7 @@ class Practise:
         self.infoText.update()
 
     def loadPreferences(self):
-        prefs = Preferences.getInstance()
+        prefs = PreferencesManager.getInstance()
         self.loadBboxFromPrefs(prefs)
         self.loadBatchFromPrefs(prefs)
         self.loadLogFromPrefs(prefs)
