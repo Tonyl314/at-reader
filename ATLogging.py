@@ -1,7 +1,7 @@
 import os, time
 
 class ATLogger:
-    VERSION = 1.0
+    VERSION = 1.1
     DATA_FOLDER_NAME = "Data"
 
     def __init__(self, logShort=False, filename="ATs.log"):
@@ -23,7 +23,7 @@ class ATLogger:
         self.writeToFile(line)
 
     def writeToFile(self, text):
-        self.file.write(line)
+        self.file.write(text)
         self.file.flush()
 
     def doesFileExist(self):

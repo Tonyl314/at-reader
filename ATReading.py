@@ -1,4 +1,3 @@
-#from mss.windows import MSS as mss
 from mss import mss
 import mss.tools as mss_tools
 import time
