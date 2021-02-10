@@ -1,7 +1,7 @@
 import os, time
 
 class ATLogger:
-    VERSION = 1.0
+    VERSION = 1.1
     DATA_FOLDER_NAME = "Data"
 
     def __init__(self, logShort=False, filename="ATs.log"):
@@ -13,14 +13,18 @@ class ATLogger:
         self.file = open(self.filepath, "a")
 
     def log(self, actionTest):
-        self.file.write(actionTest.getLogLine(self.logShort) + "\n")
+        self.writeToFile(actionTest.getLogLine(self.logShort) + "\n")
 
     def logNewSession(self, usedBbox):
         date = time.strftime("%d. %m. %Y %H:%M")
         pixelWidth = usedBbox[2] - usedBbox[0]
         line = "---New Session (v{}) ({}) ({} pixels wide)\n"
         line = line.format(self.VERSION, date, pixelWidth)
-        self.file.write(line)
+        self.writeToFile(line)
+
+    def writeToFile(self, text):
+        self.file.write(text)
+        self.file.flush()
 
     def doesFileExist(self):
         return os.path.isfile(self.filepath)
