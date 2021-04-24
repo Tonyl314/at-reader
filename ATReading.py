@@ -3,13 +3,16 @@ import mss.tools as mss_tools
 import time
 
 # KNOWN ISSUES:
+# - canceled ATs get read as white
+# - difficult prints are broken
 # - redding very early is broken
 # - ATs *right* after each other might not get registered
+
 
 class ATReader:
     @staticmethod
     def constructBbox(xLeft, xRight, yTop):
-        return (xLeft,yTop-2,xRight+1,yTop+1)
+        return (xLeft, yTop - 2, xRight + 1, yTop + 1)
 
     def __init__(self, bbox):
         self.bbox = bbox
@@ -20,7 +23,7 @@ class ATReader:
         self.waitToLoadUp()
         self.locateSections()
         self.watchBar()
-        self.evalutateResult()
+        self.evaluateResult()
         self.currentAT.print()
         return self.currentAT
 
@@ -33,22 +36,22 @@ class ATReader:
             while True:
                 img = sct.grab(self.bbox)
                 if self.containsAT(img):
-                    time.sleep(.0275) # a tiny bit for the green to settle
+                    time.sleep(.0275)  # a tiny bit for the green to settle
                     return attempts
                 attempts += 1
 
     def containsAT(self, img):
         xRight = img.size.width - 1
         # check the pixels NEXT to the border (border can be darker)
-        isLeftRed = self.isColourRed(img.pixel(1,2))
-        isRightRed = self.isColourRed(img.pixel(xRight-1,2))
+        isLeftRed = Colour.isColourRed(img.pixel(1, 2))
+        isRightRed = Colour.isColourRed(img.pixel(xRight - 1, 2))
         isTopRowDark = self.isTopRowDark(img)
         return (isLeftRed or isRightRed) and isTopRowDark
 
-    def locateSections(self): # would use refactoring
+    def locateSections(self):  # would use refactoring
         img = mss().grab(self.bbox)
         greenPos = None
-        whitePos = [None, None] # start and end
+        whitePos = [None, None]  # start and end
         for x in range(img.size.width):
             section = self.determineSectionInColumn(img, x)
             if section == ATResult.GREEN:
@@ -64,27 +67,27 @@ class ATReader:
             elif section == ATResult.RED:
                 # is it the end of the white section?
                 if whitePos[0] is not None and whitePos[1] is None:
-                    whitePos[1] = x-1
+                    whitePos[1] = x - 1
         # cover the edge case where the end of an AT is white
         if whitePos[1] is None and whitePos[0] is not None:
             whitePos[1] = img.size.width - 1
-        self.currentAT.setGreenPos(greenPos)
-        self.currentAT.setWhitePos(whitePos)
+        self.currentAT.greenPosition = greenPos
+        self.currentAT.whitePositions = whitePos
         self.informUserIfLocatingFailed(img)
 
     def determineSectionInColumn(self, img, x):
-        rgbMiddle = img.pixel(x,1)
-        if self.isQuiteGreen(rgbMiddle) and self.hasPureGreen(rgbMiddle):
+        rgbMiddle = img.pixel(x, 1)
+        if Colour.isQuiteGreen(rgbMiddle) and Colour.hasPureGreen(rgbMiddle):
             return self.checkFurtherForGreen(img, x)
-        rgbBottom = img.pixel(x,2)
-        if self.isMostlyRed(rgbBottom):
+        rgbBottom = img.pixel(x, 2)
+        if Colour.isMostlyRed(rgbBottom):
             return ATResult.RED
         return self.checkFurtherForWhite(img, x)
 
     def checkFurtherForGreen(self, img, x):
         # green section! but check just in case
-        rgbTop = img.pixel(x,0)
-        if not self.isQuiteDark(rgbTop):
+        rgbTop = img.pixel(x, 0)
+        if not Colour.isQuiteDark(rgbTop):
             # false alarm?
             self.informUserAboutProblem("lightPixelAboveGreen", img)
             return ATResult.WHITE
@@ -92,8 +95,8 @@ class ATReader:
 
     def checkFurtherForWhite(self, img, x):
         # looks white – but it could be the bar
-        rgbTop = img.pixel(x,0)
-        if self.isQuiteDark(rgbTop):
+        rgbTop = img.pixel(x, 0)
+        if Colour.isQuiteDark(rgbTop):
             return ATResult.WHITE
         return ATResult.RED
 
@@ -126,21 +129,21 @@ class ATReader:
                 lastX = newX
                 barPositions.append(lastX)
         timeTook = time.time() - startTime
-        captures = len(barPositions) + stillFrames + 1 # +1 for when not found
-        self.currentAT.setBarPositions(barPositions)
-        self.currentAT.setStillFrames(stillFrames)
-        self.currentAT.setCapturesPerSecond(round(captures/timeTook, 2))
+        captures = len(barPositions) + stillFrames + 1  # +1 for when not found
+        self.currentAT.barPositions = barPositions
+        self.currentAT.stillFrames = stillFrames
+        self.currentAT.capturesPerSecond = round(captures / timeTook, 2)
 
     def findBar(self, img, minimumX):
         width = img.size.width
         for x in range(minimumX, width):
-            rgb = img.pixel(x,0)
-            if self.hasPureGreen(rgb):
+            rgb = img.pixel(x, 0)
+            if Colour.hasPureGreen(rgb):
                 return x
         return False
 
-    def evalutateResult(self):
-        time.sleep(.02) # wait a tiny bit for the colour to be clear
+    def evaluateResult(self):
+        time.sleep(.02)  # wait a tiny bit for the colour to be clear
         img = mss().grab(self.bbox)
         mss_tools.to_png(img.rgb, img.size, output="lastResult.png")
 
@@ -150,82 +153,40 @@ class ATReader:
 
     def isTopRowDark(self, img):
         rightX = img.size.width - 1
-        isLeftDark = self.isDark(img.pixel(0,0))
-        isRightDark = self.isDark(img.pixel(rightX,0))
+        isLeftDark = Colour.isDark(img.pixel(0, 0))
+        isRightDark = Colour.isDark(img.pixel(rightX, 0))
         return isLeftDark and isRightDark
 
     def isResultRed(self, img):
         rightX = img.size.width - 1
-        isLeftRed = self.isVeryRed(img.pixel(0,2))
-        isRightRed = self.isVeryRed(img.pixel(rightX,2))
+        isLeftRed = Colour.isVeryRed(img.pixel(0, 2))
+        isRightRed = Colour.isVeryRed(img.pixel(rightX, 2))
         return isLeftRed and isRightRed
 
     def isResultGreen(self, img):
         rightX = img.size.width - 1
-        isLeftGreen = self.isColourGreen(img.pixel(0,2))
-        isRightGreen = self.isColourGreen(img.pixel(rightX,2))
+        isLeftGreen = Colour.isColourGreen(img.pixel(0, 2))
+        isRightGreen = Colour.isColourGreen(img.pixel(rightX, 2))
         return isLeftGreen and isRightGreen
 
     def applyResultWithRedGreen(self, isRed, isGreen):
         if isRed and isGreen:
             raise Exception("Red and green at the same time?!")
         elif isRed:
-            self.currentAT.setResult(ATResult.RED)
+            self.currentAT.result = ATResult.RED
         elif isGreen:
-            self.currentAT.setResult(ATResult.GREEN)
+            self.currentAT.result = ATResult.GREEN
         else:
-            self.currentAT.setResult(ATResult.WHITE)
-
-    def isColourRed(self, rgb):
-        return rgb[0] >= 145 and rgb[1] <= 35 and rgb[2] <= 35
-
-    def isVeryRed(self, rgb):
-        return rgb[0] >= 225 and rgb[1] <= 15 and rgb[2] <= 15
-
-    def isMostlyRed(self, rgb):
-        return (rgb[0] - rgb[1]) >= 15
-
-    def isColourGreen(self, rgb):
-        return rgb[0] < 50 and rgb[1] > 200 and rgb[2] < 50
-
-    def isQuiteGreen(self, rgb):
-        return rgb[1] > 200 and (rgb[1] - rgb[0]) > 50
-
-    def hasPureGreen(self, rgb):
-        return rgb[1] == 255
-
-    def isDark(self, rgb):
-        return max(rgb) < 50
-
-    def isQuiteDark(self, rgb):
-        return sum(rgb) < 270
+            self.currentAT.result = ATResult.WHITE
 
 
 class ActionTest:
     barPositions = []
     greenPosition = None
-    whitePositions = [None, None] # start, end
+    whitePositions = [None, None]  # start, end
     stillFrames = None
     result = None
     capturesPerSecond = None
-
-    def setGreenPos(self, x):
-        self.greenPosition = x
-
-    def setWhitePos(self, Xs):
-        self.whitePositions = Xs
-
-    def setBarPositions(self, positions):
-        self.barPositions = positions
-
-    def setStillFrames(self, frames):
-        self.stillFrames = frames
-
-    def setResult(self, result):
-        self.result = result
-
-    def setCapturesPerSecond(self, cps):
-        self.capturesPerSecond = cps
 
     def print(self):
         resultName = ATResult.names[self.result]
@@ -239,33 +200,62 @@ class ActionTest:
                 timing = "early"
         else:
             timing = "?"
-        print("{} ({}): {} {}-{} ...{}".format(resultName, timing, self.greenPosition,
-            *self.whitePositions, self.barPositions[-4:]))
+        whiteStart, whiteEnd = self.whitePositions
+        print(f"{resultName} ({timing}): {self.greenPosition} {whiteStart}-{whiteEnd} ...{self.barPositions[-4:]}")
 
     def getLogLine(self, logShort=False):
-        # result greenPos whitePos hitPos/barPositions stillFrames capturesPerSecond
-        info = []
-        info.append(ATResult.getResultName(self.result))
-        info.append(str(self.greenPosition))
-        info.append("-".join(map(str,self.whitePositions)))
+        resultName = ATResult.getResultName(self.result)
+        whiteStart, whiteEnd = self.whitePositions
+        barPositions = self.barPositions
         if logShort:
             if self.barPositions:
-                info.append(str(self.barPositions[-1]))
+                barPositions = self.barPositions[-1]
             else:
-                info.append("?")
-        else:
-            info.append(str(self.barPositions))
-        info.append(str(self.stillFrames))
-        info.append(str(self.capturesPerSecond))
-        return " ".join(info)
+                barPositions = "?"
+        cps = self.capturesPerSecond
+        return f"{resultName} {self.greenPosition} {whiteStart}-{whiteEnd} {barPositions} {self.stillFrames} {cps}"
 
 
 class ATResult:
     WHITE = 0
     GREEN = 1
     RED = 2
-    names = ["white","green","red"]
+    names = ["white", "green", "red"]
 
     @classmethod
-    def getResultName(thisClass, index):
-        return thisClass.names[index]
+    def getResultName(cls, index):
+        return cls.names[index]
+
+
+class Colour:
+    @staticmethod
+    def isColourRed(rgb):
+        return rgb[0] >= 145 and rgb[1] <= 35 and rgb[2] <= 35
+
+    @staticmethod
+    def isVeryRed(rgb):
+        return rgb[0] >= 225 and rgb[1] <= 15 and rgb[2] <= 15
+
+    @staticmethod
+    def isMostlyRed(rgb):
+        return (rgb[0] - rgb[1]) >= 15
+
+    @staticmethod
+    def isColourGreen(rgb):
+        return rgb[0] < 50 and rgb[1] > 200 and rgb[2] < 50
+
+    @staticmethod
+    def isQuiteGreen(rgb):
+        return rgb[1] > 200 and (rgb[1] - rgb[0]) > 50
+
+    @staticmethod
+    def hasPureGreen(rgb):
+        return rgb[1] == 255
+
+    @staticmethod
+    def isDark(rgb):
+        return max(rgb) < 50
+
+    @staticmethod
+    def isQuiteDark(rgb):
+        return sum(rgb) < 270

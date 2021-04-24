@@ -1,28 +1,31 @@
 import os
 from ATLogging import ATLogger
 
+
 class PreferencesManager:
     DATA_FOLDER_NAME = ATLogger.DATA_FOLDER_NAME
     FILENAME = "prefs.txt"
-    DEFAULTS = [("batch size",100),
-                ("batches to show",5),
-                ("AT top left X",835),
-                ("AT top right X",1084),
-                ("AT top Y",895),
-                ("short logs (y/n)","y"),
-                ("log filename","ATs.log")]
-    KEY_NAMES = ["batchSize","batchesToShow","xLeft","xRight","yTop","logShort","logFilename"]
-    _instance = None # singleton
+    DEFAULTS = [("batch size", 100),  # not dict because order matters
+                ("batches to show", 5),
+                ("AT top left X", 835),
+                ("AT top right X", 1084),
+                ("AT top Y", 895),
+                ("short logs (y/n)", "y"),
+                ("log filename", "ATs.log")]
+    KEY_NAMES = next(zip(*DEFAULTS))
+    _instance = None  # singleton
 
     def __init__(self):
         self.filepath = self.DATA_FOLDER_NAME + "/" + self.FILENAME
+        self.repairFileLater = False
+        self.chosenValues = None
         self.loadValues()
 
     @classmethod
-    def getInstance(thisClass):
-        if thisClass._instance is None:
-            thisClass._instance = thisClass()
-        return thisClass._instance
+    def getInstance(cls):
+        if cls._instance is None:
+            cls._instance = cls()
+        return cls._instance
 
     def getValueByKeyName(self, keyName):
         if keyName not in self.KEY_NAMES:
@@ -36,7 +39,7 @@ class PreferencesManager:
             self.makeNewFile()
         lines = self.readFileLines()
         if len(lines) < len(self.DEFAULTS):
-            input("-Prefs file uncomplete. Press enter to revert to defaults:")
+            input("-Prefs file incomplete. Press enter to revert to defaults:")
             self.repairFileAndReload()
             return
 
@@ -46,6 +49,7 @@ class PreferencesManager:
             value = self.getValueViaLinesAndIndex(lines, index)
             userChosenValues.append(value)
         self.chosenValues = userChosenValues
+
         if self.repairFileLater:
             self.offerFileRepair()
 
@@ -63,19 +67,20 @@ class PreferencesManager:
     def getDefaultAndRepairLater(self, index, message):
         self.repairFileLater = True
         lineName = self.DEFAULTS[index][0]
-        print("---Prefs file error ({}): {}".format(lineName, message))
+        print(f"---Prefs file error ({lineName}): {message}")
         return self.DEFAULTS[index][1]
 
     def handleValueDataType(self, value, index):
         if type(self.DEFAULTS[index][1]) == int:
             try:
                 value = int(value)
-            except:
+            except ValueError:
                 return self.getDefaultAndRepairLater(index, "expected integer")
         return value
 
     def offerFileRepair(self):
-        answer = input("Prefs file broken, do you want to revert to defaults? (y/n)")
+        prompt = "Prefs file broken, do you want to revert to defaults? (y/n)"
+        answer = input(prompt).strip().lower()
         while answer not in "yn":
             answer = input("Choose y or n:")
         if answer == "y":
@@ -96,12 +101,10 @@ class PreferencesManager:
         return os.path.isfile(self.filepath)
 
     def overrideFile(self, toWrite):
-        file = open(self.filepath, "w")
-        file.write(toWrite)
-        file.close()
+        with open(self.filepath, "w") as file:
+            file.write(toWrite)
 
     def readFileLines(self):
-        file = open(self.filepath, "r")
-        lines = file.readlines()
-        file.close()
+        with open(self.filepath, "r") as file:
+            lines = file.readlines()
         return lines

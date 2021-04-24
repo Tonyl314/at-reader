@@ -1,7 +1,9 @@
-import os, time
+import os
+import time
+
 
 class ATLogger:
-    VERSION = 1.1
+    VERSION = 1.2
     DATA_FOLDER_NAME = "Data"
 
     def __init__(self, logShort=False, filename="ATs.log"):
@@ -18,8 +20,7 @@ class ATLogger:
     def logNewSession(self, usedBbox):
         date = time.strftime("%d. %m. %Y %H:%M")
         pixelWidth = usedBbox[2] - usedBbox[0]
-        line = "---New Session (v{}) ({}) ({} pixels wide)\n"
-        line = line.format(self.VERSION, date, pixelWidth)
+        line = f"---New Session (v{self.VERSION}) ({date}) ({pixelWidth} pixels wide)\n"
         self.writeToFile(line)
 
     def writeToFile(self, text):
@@ -29,10 +30,10 @@ class ATLogger:
     def doesFileExist(self):
         return os.path.isfile(self.filepath)
 
-    @classmethod # other classes can also use the data folder
-    def makeDataFolder(thisClass):
-        if os.path.exists(thisClass.DATA_FOLDER_NAME): return
-        os.mkdir(thisClass.DATA_FOLDER_NAME)
+    @classmethod  # other classes can also use the data folder
+    def makeDataFolder(cls):
+        if not os.path.exists(cls.DATA_FOLDER_NAME):
+            os.mkdir(cls.DATA_FOLDER_NAME)
 
     def makeNewFile(self):
         open(self.filepath, "w").close()
