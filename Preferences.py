@@ -12,7 +12,7 @@ class PreferencesManager:
                 ("AT top Y", 895),
                 ("short logs (y/n)", "y"),
                 ("log filename", "ATs.log")]
-    KEY_NAMES = next(zip(*DEFAULTS))
+    KEY_NAMES = ["batchSize", "batchesToShow", "xLeft", "xRight", "yTop", "logShort", "logFilename"]
     _instance = None  # singleton
 
     def __init__(self):
