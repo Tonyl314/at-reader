@@ -5,4 +5,4 @@ It's also **streaming-ready** with its continuously updated text file containing
 First install [mss](https://github.com/BoboTiG/python-mss). Run **Practising.py** to start a practise session.
 Initial run should create a *Data/prefs.txt* file – here you can input the pixel coordinates of where your ATs will be located. Use this guide:
 
-![screenshot, top corners of the AT](https://tonyl.site/spyparty/at-reader-tutorial.png)
+![screenshot, top corners of the AT](https://tonyl.eu/spyparty/at-reader-tutorial.png)
