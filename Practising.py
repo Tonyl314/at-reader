@@ -3,8 +3,10 @@ from ATReading import *
 from ATLogging import ATLogger
 from Preferences import PreferencesManager
 
+
 class Practise:
     def __init__(self):
+        self.bbox, self.logShort, self.logFilename = None, None, None
         self.loadPreferences()
         self.reader = ATReader(self.bbox)
         self.logger = ATLogger(self.logShort, self.logFilename)
@@ -30,14 +32,14 @@ class Practise:
         InfoTextManager.BATCHES_TO_SHOW = prefs.getValueByKeyName("batchesToShow")
 
     def loadLogFromPrefs(self, prefs):
-        self.logShortYN = prefs.getValueByKeyName("logShort")
-        if self.logShortYN == "y":
+        logShortYN = prefs.getValueByKeyName("logShort")
+        if logShortYN == "y":
             self.logShort = True
-        elif self.logShortYN == "n":
+        elif logShortYN == "n":
             self.logShort = False
         else:
             print("---Preference error: unknown answer for y/n.")
-            self.logShort = True # default
+            self.logShort = True  # default
         self.logFilename = prefs.getValueByKeyName("logFilename")
 
     def start(self):
@@ -46,7 +48,7 @@ class Practise:
         while True:
             actionTest = self.reader.readAT()
             self.processActionTest(actionTest)
-            time.sleep(.1) # a tiny bit for the result to settle down
+            time.sleep(.1)  # a tiny bit for the result to settle down
 
     def processActionTest(self, actionTest):
         self.logger.log(actionTest)
@@ -63,7 +65,7 @@ class AllTimeStats:
         if not self.doesFileExist():
             ATLogger.makeDataFolder()
             self.makeNewFile()
-        self.loadSavedData()
+        self.greens, self.totalATs, self.bestChain = self.readSavedData()
 
     def doesFileExist(self):
         return os.path.isfile(self.filepath)
@@ -72,10 +74,9 @@ class AllTimeStats:
         defaultText = "0;0;0"
         self.overrideFile(defaultText)
 
-    def loadSavedData(self):
+    def readSavedData(self):
         line = self.readFile()
-        data = map(int,line.split(";"))
-        self.greens, self.totalATs, self.bestChain = data
+        return map(int, line.split(";"))
 
     def addActionTest(self, actionTest, chain=0):
         self.totalATs += 1
@@ -86,7 +87,7 @@ class AllTimeStats:
         self.save()
 
     def save(self):
-        data = map(str,[self.greens,self.totalATs,self.bestChain])
+        data = map(str, [self.greens, self.totalATs, self.bestChain])
         toWrite = ";".join(list(data))
         self.overrideFile(toWrite)
 
@@ -100,7 +101,7 @@ class AllTimeStats:
         try:
             file = open(self.filepath, "w")
         except PermissionError:
-            print("---Permission error to {}!".format(self.filepath))
+            print(f"---Permission error to {self.filepath}!")
             return
         file.write(toWrite)
         file.close()
@@ -113,9 +114,6 @@ class Session:
     BATCH_TOTAL = 1
 
     def __init__(self):
-        self.setupSessionVars()
-
-    def setupSessionVars(self):
         self.totalATs = 0
         self.greens = 0
         self.chain = 0
@@ -129,10 +127,10 @@ class Session:
         if actionTest.result == ATResult.GREEN:
             self.incrementGreens()
         else:
-            self.chain = 0 # non-green ruins chain
+            self.chain = 0  # non-green ruins chain
 
     def addNewBatch(self):
-        self.batches.append([0,0])
+        self.batches.append([0, 0])
 
     def incrementTotalATs(self):
         self.totalATs += 1
@@ -153,35 +151,32 @@ class InfoTextManager:
         self.practise = practiseObject
 
     def update(self):
-        sections = []
-        sections.append(self.getAllTimeSection())
-        sections.append(self.getSessionSection())
-        sections.append(self.getBatchesSection())
+        sections = [self.getAllTimeSection(), self.getSessionSection(), self.getBatchesSection()]
         toWrite = "\n\n".join(sections)
         self.overrideInfoFile(toWrite)
 
     def getAllTimeSection(self):
         greens = self.practise.allTime.greens
         ATs = self.practise.allTime.totalATs
-        percentage = self.inPercent(greens, ATs, 1)
+        percentage = inPercent(greens, ATs, 1)
         bestChain = self.practise.allTime.bestChain
-        section = """---ALL TIME---
-Action tests: {}
-Greens: {} ({}%)
-Best streak: {}""".format(ATs, greens, percentage, bestChain)
+        section = f"""---ALL TIME---
+Action tests: {ATs}
+Greens: {greens} ({percentage}%)
+Best streak: {bestChain}"""
         return section
 
     def getSessionSection(self):
         greens = self.practise.session.greens
         ATs = self.practise.session.totalATs
-        percentage = self.inPercent(greens, ATs, 1)
+        percentage = inPercent(greens, ATs, 1)
         currentChain = self.practise.session.chain
         bestChain = self.practise.session.bestChain
-        section = """---SESSION---
-Action tests: {}
-Greens: {} ({}%)
-Best streak: {}
-Current streak: {}""".format(ATs, greens, percentage, bestChain, currentChain)
+        section = f"""---SESSION---
+Action tests: {ATs}
+Greens: {greens} ({percentage}%)
+Best streak: {bestChain}
+Current streak: {currentChain}"""
         return section
 
     def getBatchesSection(self):
@@ -197,25 +192,24 @@ Current streak: {}""".format(ATs, greens, percentage, bestChain, currentChain)
         batch = self.practise.session.batches[index]
         greens = batch[Session.BATCH_GREENS]
         totalATs = batch[Session.BATCH_TOTAL]
-        percentage = self.inPercent(greens, totalATs, 0)
-        text = "{}) {}/{} ({}%)"
-        return text.format(index+1, greens, totalATs, percentage)
-
-    def inPercent(self, portion, total, decimalPlaces=1):
-        if total == 0: return "None"
-        percentage = (portion/total)*100
-        if decimalPlaces == 0:
-            return int(round(percentage, 0)) # no decimal point
-        return round(percentage, decimalPlaces)
+        percentage = inPercent(greens, totalATs, 0)
+        return f"{index+1}) {greens}/{totalATs} ({percentage}%)"
 
     def overrideInfoFile(self, toWrite):
         try:
-            file = open(self.INFO_FILENAME, "w")
+            with open(self.INFO_FILENAME, "w") as file:
+                file.write(toWrite)
         except PermissionError:
-            print("---Permission error to {}!".format(self.INFO_FILENAME))
-            return
-        file.write(toWrite)
-        file.close()
+            print(f"---Permission error to {self.INFO_FILENAME}!")
+
+
+def inPercent(portion, total, decimalPlaces=1):
+    if total == 0:
+        return "None"
+    percentage = (portion / total) * 100
+    if decimalPlaces == 0:
+        return int(round(percentage, 0))  # no decimal point
+    return round(percentage, decimalPlaces)
 
 
 if __name__ == "__main__":
