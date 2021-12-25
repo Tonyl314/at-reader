@@ -17,94 +17,94 @@ class PreferencesManager:
 
     def __init__(self):
         self.filepath = self.DATA_FOLDER_NAME + "/" + self.FILENAME
-        self.repairFileLater = False
-        self.chosenValues = None
-        self.loadValues()
+        self.repair_file_later = False
+        self.chosen_values = None
+        self.load_values()
 
     @classmethod
-    def getInstance(cls):
+    def get_instance(cls):
         if cls._instance is None:
             cls._instance = cls()
         return cls._instance
 
-    def getValueByKeyName(self, keyName):
-        if keyName not in self.KEY_NAMES:
-            raise Exception("Wrong preference key name: " + keyName)
-        index = self.KEY_NAMES.index(keyName)
-        return self.chosenValues[index]
+    def get_value_by_key_name(self, key_name):
+        if key_name not in self.KEY_NAMES:
+            raise Exception("Wrong preference key name: " + key_name)
+        index = self.KEY_NAMES.index(key_name)
+        return self.chosen_values[index]
 
-    def loadValues(self):
-        if not self.doesFileExist():
-            ATLogger.makeDataFolder()
-            self.makeNewFile()
-        lines = self.readFileLines()
+    def load_values(self):
+        if not self.does_file_exist():
+            ATLogger.make_data_folder()
+            self.make_new_file()
+        lines = self.read_file_lines()
         if len(lines) < len(self.DEFAULTS):
             input("-Prefs file incomplete. Press enter to revert to defaults:")
-            self.repairFileAndReload()
+            self.repair_file_and_reload()
             return
 
-        self.repairFileLater = False
-        userChosenValues = []
+        self.repair_file_later = False
+        user_chosen_values = []
         for index in range(len(self.DEFAULTS)):
-            value = self.getValueViaLinesAndIndex(lines, index)
-            userChosenValues.append(value)
-        self.chosenValues = userChosenValues
+            value = self.get_value_via_lines_and_index(lines, index)
+            user_chosen_values.append(value)
+        self.chosen_values = user_chosen_values
 
-        if self.repairFileLater:
-            self.offerFileRepair()
+        if self.repair_file_later:
+            self.offer_file_repair()
 
-    def getValueViaLinesAndIndex(self, lines, index):
+    def get_value_via_lines_and_index(self, lines, index):
         line = lines[index]
         try:
             name, value = line.split(":")
             value = value.strip()
         except ValueError:
-            return self.getDefaultAndRepairLater(index, "no separator")
+            return self.get_default_and_repair_later(index, "no separator")
         if name != self.DEFAULTS[index][0]:
-            return self.getDefaultAndRepairLater(index, "wrong name")
-        return self.handleValueDataType(value, index)
+            return self.get_default_and_repair_later(index, "wrong name")
+        return self.handle_value_data_type(value, index)
 
-    def getDefaultAndRepairLater(self, index, message):
-        self.repairFileLater = True
-        lineName = self.DEFAULTS[index][0]
-        print(f"---Prefs file error ({lineName}): {message}")
+    def get_default_and_repair_later(self, index, message):
+        self.repair_file_later = True
+        line_name = self.DEFAULTS[index][0]
+        print(f"---Prefs file error ({line_name}): {message}")
         return self.DEFAULTS[index][1]
 
-    def handleValueDataType(self, value, index):
+    def handle_value_data_type(self, value, index):
         if type(self.DEFAULTS[index][1]) == int:
             try:
                 value = int(value)
             except ValueError:
-                return self.getDefaultAndRepairLater(index, "expected integer")
+                return self.get_default_and_repair_later(index, "expected integer")
         return value
 
-    def offerFileRepair(self):
+    def offer_file_repair(self):
         prompt = "Prefs file broken, do you want to revert to defaults? (y/n)"
         answer = input(prompt).strip().lower()
         while answer not in "yn":
             answer = input("Choose y or n:")
         if answer == "y":
-            self.repairFileAndReload()
+            self.repair_file_and_reload()
 
-    def repairFileAndReload(self):
-        self.makeNewFile()
+    def repair_file_and_reload(self):
+        self.make_new_file()
         print("Preference file repaired.")
-        self.loadValues()
+        self.load_values()
 
-    def makeNewFile(self):
+    def make_new_file(self):
         lines = []
         for default in self.DEFAULTS:
             lines.append(default[0] + ": " + str(default[1]))
-        self.overrideFile("\n".join(lines))
+        self.override_file("\n".join(lines))
 
-    def doesFileExist(self):
+    def does_file_exist(self):
         return os.path.isfile(self.filepath)
 
-    def overrideFile(self, toWrite):
+    def override_file(self, to_write):
         with open(self.filepath, "w") as file:
-            file.write(toWrite)
+            file.write(to_write)
 
-    def readFileLines(self):
+    def read_file_lines(self):
         with open(self.filepath, "r") as file:
             lines = file.readlines()
         return lines
