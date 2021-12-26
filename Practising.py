@@ -157,23 +157,23 @@ class InfoTextManager:
 
     def get_all_time_section(self):
         greens = self.practise.all_time.greens
-        ATs = self.practise.all_time.total_ats
-        percentage = in_percent(greens, ATs, 1)
+        ats = self.practise.all_time.total_ats
+        percentage = in_percent(greens, ats, 1)
         best_chain = self.practise.all_time.best_chain
         section = f"""---ALL TIME---
-Action tests: {ATs}
+Action tests: {ats}
 Greens: {greens} ({percentage}%)
 Best streak: {best_chain}"""
         return section
 
     def get_session_section(self):
         greens = self.practise.session.greens
-        ATs = self.practise.session.total_ats
-        percentage = in_percent(greens, ATs, 1)
+        ats = self.practise.session.total_ats
+        percentage = in_percent(greens, ats, 1)
         current_chain = self.practise.session.chain
         best_chain = self.practise.session.best_chain
         section = f"""---SESSION---
-Action tests: {ATs}
+Action tests: {ats}
 Greens: {greens} ({percentage}%)
 Best streak: {best_chain}
 Current streak: {current_chain}"""

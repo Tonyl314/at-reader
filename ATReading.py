@@ -50,15 +50,15 @@ class ATReader:
 
     def locate_sections(self):  # would use refactoring
         img = mss().grab(self.bbox)
-        greenPos = None
+        green_pos = None
         white_pos = [None, None]  # start and end
         for x in range(img.size.width):
             section = self.determine_section_in_column(img, x)
             if section == ATResult.GREEN:
                 if white_pos[1] is not None:
                     self.inform_user_about_problem("whiteEndsBeforeGreen", img)
-                if greenPos is None:
-                    greenPos = x
+                if green_pos is None:
+                    green_pos = x
             elif section == ATResult.WHITE:
                 if white_pos[1] is not None:
                     self.inform_user_about_problem("whiteStartsAfterEnding", img)
@@ -71,9 +71,9 @@ class ATReader:
         # cover the edge case where the end of an AT is white
         if white_pos[1] is None and white_pos[0] is not None:
             white_pos[1] = img.size.width - 1
-        self.current_at.green_position = greenPos
+        self.current_at.green_position = green_pos
         self.current_at.white_positions = white_pos
-        self.informUserIfLocatingFailed(img)
+        self.inform_user_if_locating_failed(img)
 
     def determine_section_in_column(self, img, x):
         rgb_middle = img.pixel(x, 1)
@@ -100,7 +100,7 @@ class ATReader:
             return ATResult.WHITE
         return ATResult.RED
 
-    def informUserIfLocatingFailed(self, img):
+    def inform_user_if_locating_failed(self, img):
         if self.current_at.green_position is None:
             self.inform_user_about_problem("greenNotFound", img)
         if None in self.current_at.white_positions:
